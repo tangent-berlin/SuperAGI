@@ -19,7 +19,7 @@ def run_npm_commands():
     os.chdir("..")
 
 def run_server():
-    api_process = subprocess.Popen(["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"])
+    api_process = subprocess.Popen(["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"])
     os.chdir("gui")
     ui_process = subprocess.Popen(["npm", "run", "dev"])
     os.chdir("..")

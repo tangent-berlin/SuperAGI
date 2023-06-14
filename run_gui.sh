@@ -29,7 +29,7 @@ function run_npm_commands() {
 }
 
 function run_server() {
-  uvicorn main:app --host 0.0.0.0 --port 8000 &
+  uvicorn main:app --host 0.0.0.0 --port 8001 &
   api_process=$!
   cd gui && npm run dev &
   ui_process=$!

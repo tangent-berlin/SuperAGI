@@ -23,7 +23,7 @@ def run_npm_commands(shell=False):
 
 
 def run_server(shell=False):
-    api_process = subprocess.Popen(["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"], shell=shell)
+    api_process = subprocess.Popen(["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"], shell=shell)
     # celery_process = None
     celery_process = subprocess.Popen(["celery", "-A", "superagi.worker", "worker", "--loglevel=info"], shell=shell)
     os.chdir("gui")
