@@ -21,9 +21,11 @@ class Config(BaseSettings):
                 config_data = {}
         else:
             # If config file doesn't exist, prompt for credentials and create new file
-            print("\033[91m\033[1m"
-        + "\nConfig file not found. Enter required keys and values."
-        + "\033[0m\033[0m")
+            print(
+                "\033[91m\033[1m"
+                + "\nConfig file not found. Enter required keys and values."
+                + "\033[0m\033[0m"
+            )
             config_data = {
                 "PINECONE_API_KEY": input("Pinecone API Key: "),
                 "PINECONE_ENVIRONMENT": input("Pinecone Environment: "),

@@ -8,7 +8,6 @@ from superagi.config.config import get_config
 
 
 class VectorFactory:
-
     @classmethod
     def get_vector_storage(cls, vector_store, index_name, embedding_model):
         if vector_store == "PineCone":
@@ -24,12 +23,10 @@ class VectorFactory:
 
                     # if does not exist, create index
                     pinecone.create_index(
-                        index_name,
-                        dimension=len(sample_embedding),
-                        metric='dotproduct'
+                        index_name, dimension=len(sample_embedding), metric="dotproduct"
                     )
                 index = pinecone.Index(index_name)
-                return Pinecone(index, embedding_model, 'text')
+                return Pinecone(index, embedding_model, "text")
             except UnauthorizedException:
                 raise ValueError("PineCone API key not found")
         else:

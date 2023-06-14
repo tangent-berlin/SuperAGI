@@ -15,7 +15,7 @@ def check_command(command, message):
 def run_npm_commands(shell=False):
     os.chdir("gui")
     try:
-        subprocess.run(["npm", "install"], check=True,shell=shell)
+        subprocess.run(["npm", "install"], check=True, shell=shell)
     except subprocess.CalledProcessError:
         print(f"Error during '{' '.join(sys.exc_info()[1].cmd)}'. Exiting.")
         sys.exit(1)
@@ -23,13 +23,17 @@ def run_npm_commands(shell=False):
 
 
 def run_server(shell=False):
-    api_process = subprocess.Popen(["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"], shell=shell)
+    api_process = subprocess.Popen(
+        ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"], shell=shell
+    )
     # celery_process = None
-    celery_process = subprocess.Popen(["celery", "-A", "superagi.worker", "worker", "--loglevel=info"], shell=shell)
+    celery_process = subprocess.Popen(
+        ["celery", "-A", "superagi.worker", "worker", "--loglevel=info"], shell=shell
+    )
     os.chdir("gui")
     ui_process = subprocess.Popen(["npm", "run", "dev"], shell=shell)
     os.chdir("..")
-    return api_process, ui_process , celery_process
+    return api_process, ui_process, celery_process
 
 
 def cleanup(api_process, ui_process, celery_process):
@@ -44,7 +48,9 @@ def cleanup(api_process, ui_process, celery_process):
 if __name__ == "__main__":
     check_command("node", "Node.js is not installed. Please install it and try again.")
     check_command("npm", "npm is not installed. Please install npm to proceed.")
-    check_command("uvicorn", "uvicorn is not installed. Please install uvicorn to proceed.")
+    check_command(
+        "uvicorn", "uvicorn is not installed. Please install uvicorn to proceed."
+    )
 
     isWindows = False
     if platform == "win32" or platform == "cygwin":

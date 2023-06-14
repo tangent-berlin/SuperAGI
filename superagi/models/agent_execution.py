@@ -7,10 +7,12 @@ from superagi.models.base_model import DBBaseModel
 
 
 class AgentExecution(DBBaseModel):
-    __tablename__ = 'agent_executions'
+    __tablename__ = "agent_executions"
 
     id = Column(Integer, primary_key=True)
-    status = Column(String)  # like ('CREATED', 'RUNNING', 'PAUSED', 'COMPLETED', 'TERMINATED')
+    status = Column(
+        String
+    )  # like ('CREATED', 'RUNNING', 'PAUSED', 'COMPLETED', 'TERMINATED')
     name = Column(String)
     agent_id = Column(Integer)
     last_execution_time = Column(DateTime)
@@ -27,14 +29,14 @@ class AgentExecution(DBBaseModel):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'status': self.status,
-            'name': self.name,
-            'agent_id': self.agent_id,
-            'last_execution_time': self.last_execution_time.isoformat(),
-            'num_of_calls': self.num_of_calls,
-            'num_of_tokens': self.num_of_tokens,
-            'current_step_id': self.current_step_id,
+            "id": self.id,
+            "status": self.status,
+            "name": self.name,
+            "agent_id": self.agent_id,
+            "last_execution_time": self.last_execution_time.isoformat(),
+            "num_of_calls": self.num_of_calls,
+            "num_of_tokens": self.num_of_tokens,
+            "current_step_id": self.current_step_id,
         }
 
     def to_json(self):
@@ -43,14 +45,14 @@ class AgentExecution(DBBaseModel):
     @classmethod
     def from_json(cls, json_data):
         data = json.loads(json_data)
-        last_execution_time = datetime.fromisoformat(data['last_execution_time'])
+        last_execution_time = datetime.fromisoformat(data["last_execution_time"])
         return cls(
-            id=data['id'],
-            status=data['status'],
-            name=data['name'],
-            agent_id=data['agent_id'],
+            id=data["id"],
+            status=data["status"],
+            name=data["name"],
+            agent_id=data["agent_id"],
             last_execution_time=last_execution_time,
-            num_of_calls=data['num_of_calls'],
-            num_of_tokens=data['num_of_tokens'],
-            current_step_id=data['current_step_id'],
+            num_of_calls=data["num_of_calls"],
+            num_of_tokens=data["num_of_tokens"],
+            current_step_id=data["current_step_id"],
         )

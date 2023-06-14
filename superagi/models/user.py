@@ -4,8 +4,9 @@ from superagi.models.base_model import DBBaseModel
 
 # from pydantic import BaseModel
 
+
 class User(DBBaseModel):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)

@@ -9,13 +9,12 @@ from superagi.vector_store.embedding.openai import BaseEmbedding
 
 class Pinecone(VectorStore):
     def __init__(
-            self,
-            index: Any,
-            embedding_model: BaseEmbedding,
-            text_field: str,
-            namespace: Optional[str] = '',
+        self,
+        index: Any,
+        embedding_model: BaseEmbedding,
+        text_field: str,
+        namespace: Optional[str] = "",
     ):
-
         try:
             import pinecone
         except ImportError:
@@ -30,13 +29,13 @@ class Pinecone(VectorStore):
         self.namespace = namespace
 
     def add_texts(
-            self,
-            texts: Iterable[str],
-            metadatas: Optional[list[dict]] = None,
-            ids: Optional[list[str]] = None,
-            namespace: Optional[str] = None,
-            batch_size: int = 32,
-            **kwargs: Any,
+        self,
+        texts: Iterable[str],
+        metadatas: Optional[list[dict]] = None,
+        ids: Optional[list[str]] = None,
+        namespace: Optional[str] = None,
+        batch_size: int = 32,
+        **kwargs: Any,
     ) -> list[str]:
         """Add texts to the vector store."""
         if namespace is None:
@@ -55,16 +54,20 @@ class Pinecone(VectorStore):
         self.index.upsert(vectors, namespace=namespace, batch_size=batch_size)
         return ids
 
-    def get_matching_text(self, query: str, top_k: int = 5, **kwargs: Any) -> List[Document]:
+    def get_matching_text(
+        self, query: str, top_k: int = 5, **kwargs: Any
+    ) -> List[Document]:
         """Return docs most similar to query using specified search type."""
         namespace = kwargs.get("namespace", self.namespace)
 
         embed_text = self.embedding_model.get_embedding(query)
-        res = self.index.query(embed_text, top_k=top_k, namespace=namespace, include_metadata=True)
+        res = self.index.query(
+            embed_text, top_k=top_k, namespace=namespace, include_metadata=True
+        )
 
         documents = []
 
-        for doc in res['matches']:
+        for doc in res["matches"]:
             documents.append(
                 Document(
                     text_content=doc.metadata[self.text_field],

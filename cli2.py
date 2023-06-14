@@ -23,10 +23,33 @@ def run_npm_commands(shell=False):
     os.chdir("..")
 
 
-def run_server(shell=False,a_name=None,a_description=None,goals=None):
-    api_process = Process(target=subprocess.run, args=(["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"],), kwargs={"shell": shell})
-    celery_process = Process(target=subprocess.run, args=(["celery", "-A", "celery_app", "worker", "--loglevel=info"],), kwargs={"shell": shell})
-    ui_process = Process(target=subprocess.run, args=(["python", "test.py","--name",a_name,"--description",a_description,"--goals"]+goals,), kwargs={"shell": shell})
+def run_server(shell=False, a_name=None, a_description=None, goals=None):
+    api_process = Process(
+        target=subprocess.run,
+        args=(["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"],),
+        kwargs={"shell": shell},
+    )
+    celery_process = Process(
+        target=subprocess.run,
+        args=(["celery", "-A", "celery_app", "worker", "--loglevel=info"],),
+        kwargs={"shell": shell},
+    )
+    ui_process = Process(
+        target=subprocess.run,
+        args=(
+            [
+                "python",
+                "test.py",
+                "--name",
+                a_name,
+                "--description",
+                a_description,
+                "--goals",
+            ]
+            + goals,
+        ),
+        kwargs={"shell": shell},
+    )
 
     api_process.start()
     celery_process.start()
@@ -47,14 +70,16 @@ def cleanup(api_process, ui_process, celery_process):
 if __name__ == "__main__":
     check_command("node", "Node.js is not installed. Please install it and try again.")
     check_command("npm", "npm is not installed. Please install npm to proceed.")
-    check_command("uvicorn", "uvicorn is not installed. Please install uvicorn to proceed.")
+    check_command(
+        "uvicorn", "uvicorn is not installed. Please install uvicorn to proceed."
+    )
 
     agent_name = input("Enter an agent name: ")
     agent_description = input("Enter an agent description: ")
     goals = []
     while True:
         goal = input("Enter a goal (or 'q' to quit): ")
-        if goal == 'q':
+        if goal == "q":
             break
         goals.append(goal)
     isWindows = False
@@ -63,7 +88,9 @@ if __name__ == "__main__":
     run_npm_commands(shell=isWindows)
 
     try:
-        api_process, ui_process, celery_process = run_server(isWindows, agent_name, agent_description, goals)
+        api_process, ui_process, celery_process = run_server(
+            isWindows, agent_name, agent_description, goals
+        )
         while True:
             try:
                 sleep(30)

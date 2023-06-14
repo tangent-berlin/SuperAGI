@@ -11,12 +11,12 @@ import json
 from superagi.config.config import get_config
 
 
-
 class GoogleSearchSchema(BaseModel):
     query: str = Field(
         ...,
         description="The search query for Google search.",
     )
+
 
 class GoogleSearchTool(BaseTool):
     llm: Optional[BaseLlm] = None
@@ -37,8 +37,10 @@ class GoogleSearchTool(BaseTool):
         num_pages = 1
         num_extracts = 3
 
-        #print("query: ", query)
-        google_search = GoogleSearchWrap(api_key, search_engine_id, num_results, num_pages, num_extracts)
+        # print("query: ", query)
+        google_search = GoogleSearchWrap(
+            api_key, search_engine_id, num_results, num_pages, num_extracts
+        )
         snippets, webpages, links = google_search.get_result(query)
 
         results = []
@@ -51,11 +53,13 @@ class GoogleSearchTool(BaseTool):
         summary = self.summarise_result(query, results)
         links = [result["links"] for result in results if len(result["links"]) > 0]
         if len(links) > 0:
-            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])
+            return (
+                summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])
+            )
         return summary
 
     def summarise_result(self, query, snippets):
-        summarize_prompt ="""Summarize the following text `{snippets}`
+        summarize_prompt = """Summarize the following text `{snippets}`
             Write a concise or as descriptive as necessary and attempt to
             answer the query: `{query}` as best as possible. Use markdown formatting for
             longer responses."""

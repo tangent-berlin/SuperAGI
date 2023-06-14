@@ -2,7 +2,7 @@ from cryptography.fernet import Fernet
 
 # Generate a key
 # key = Fernet.generate_key()
-key = b'e3mp0E0Jr3jnVb96A31_lKzGZlSTPIp4-rPaVseyn58='
+key = b"e3mp0E0Jr3jnVb96A31_lKzGZlSTPIp4-rPaVseyn58="
 
 cipher_suite = Fernet(key)
 

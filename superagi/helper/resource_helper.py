@@ -5,7 +5,6 @@ import datetime
 
 
 class ResourceHelper:
-
     @staticmethod
     def make_written_file_resource(file_name: str, agent_id: int, file, channel):
         path = get_config("RESOURCES_OUTPUT_ROOT_DIR")
@@ -19,10 +18,12 @@ class ResourceHelper:
         else:
             file_type = "application/misc"
 
-        root_dir = get_config('RESOURCES_OUTPUT_ROOT_DIR')
+        root_dir = get_config("RESOURCES_OUTPUT_ROOT_DIR")
 
         if root_dir is not None:
-            root_dir = root_dir if root_dir.startswith("/") else os.getcwd() + "/" + root_dir
+            root_dir = (
+                root_dir if root_dir.startswith("/") else os.getcwd() + "/" + root_dir
+            )
             root_dir = root_dir if root_dir.endswith("/") else root_dir + "/"
             final_path = root_dir + file_name
         else:
@@ -31,17 +32,30 @@ class ResourceHelper:
         file_size = os.path.getsize(final_path)
 
         if storage_type == "S3":
-            file_name_parts = file_name.split('.')
-            file_name = file_name_parts[0] + '_' + str(datetime.datetime.now()).replace(' ', '').replace('.', '').replace(
-                ':', '') + '.' + file_name_parts[1]
+            file_name_parts = file_name.split(".")
+            file_name = (
+                file_name_parts[0]
+                + "_"
+                + str(datetime.datetime.now())
+                .replace(" ", "")
+                .replace(".", "")
+                .replace(":", "")
+                + "."
+                + file_name_parts[1]
+            )
             if channel == "INPUT":
-                path = 'input'
+                path = "input"
             else:
-                path = 'output'
+                path = "output"
 
         print(path + "/" + file_name)
-        resource = Resource(name=file_name, path=path + "/" + file_name, storage_type=storage_type, size=file_size,
-                            type=file_type,
-                            channel="OUTPUT",
-                            agent_id=agent_id)
+        resource = Resource(
+            name=file_name,
+            path=path + "/" + file_name,
+            storage_type=storage_type,
+            size=file_size,
+            type=file_type,
+            channel="OUTPUT",
+            agent_id=agent_id,
+        )
         return resource

@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from superagi.tools.jira.tool import JiraIssueSchema, JiraTool
 
+
 class GetProjectsSchema(BaseModel):
     pass
 
@@ -24,6 +25,6 @@ class GetProjectsTool(JiraTool):
         projects = jira.projects()
         parsed_projects = self.parse_projects(projects)
         parsed_projects_str = (
-                "Found " + str(len(parsed_projects)) + " projects:\n" + str(parsed_projects)
+            "Found " + str(len(parsed_projects)) + " projects:\n" + str(parsed_projects)
         )
         return parsed_projects_str

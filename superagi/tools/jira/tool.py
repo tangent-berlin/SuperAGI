@@ -8,6 +8,7 @@ from superagi.config.config import get_config
 from superagi.tools.base_tool import BaseTool
 from jira import JIRA
 
+
 class JiraIssueSchema(BaseModel):
     issue_key: str = Field(
         ...,
@@ -26,7 +27,6 @@ class JiraTool(BaseTool):
         jira_username = get_config("JIRA_USERNAME")
         jira_api_token = get_config("JIRA_API_TOKEN")
         jira = JIRA(
-            server=jira_instance_url,
-            basic_auth=(jira_username, jira_api_token)
+            server=jira_instance_url, basic_auth=(jira_username, jira_api_token)
         )
         return jira

@@ -4,8 +4,9 @@ from superagi.models.base_model import DBBaseModel
 
 # from pydantic import BaseModel
 
+
 class Tool(DBBaseModel):
-    __tablename__ = 'tools'
+    __tablename__ = "tools"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)

@@ -11,12 +11,20 @@ from superagi.helper.s3_helper import S3Helper
 from sqlalchemy.orm import sessionmaker
 
 
-
 class ImageGenInput(BaseModel):
-    prompt: str = Field(..., description="Prompt for Image Generation to be used by Dalle.")
-    size: int = Field(..., description="Size of the image to be Generated. default size is 512")
-    num: int = Field(..., description="Number of Images to be generated. default num is 2")
-    image_name: list = Field(..., description="Image Names for the generated images, example 'image_1.png'. Only include the image name. Don't include path.")
+    prompt: str = Field(
+        ..., description="Prompt for Image Generation to be used by Dalle."
+    )
+    size: int = Field(
+        ..., description="Size of the image to be Generated. default size is 512"
+    )
+    num: int = Field(
+        ..., description="Number of Images to be generated. default num is 2"
+    )
+    image_name: list = Field(
+        ...,
+        description="Image Names for the generated images, example 'image_1.png'. Only include the image name. Don't include path.",
+    )
 
 
 class ImageGenTool(BaseTool):
@@ -37,25 +45,33 @@ class ImageGenTool(BaseTool):
             size = min([256, 512, 1024], key=lambda x: abs(x - size))
         response = self.llm.generate_image(prompt, size, num)
         response = response.__dict__
-        response = response['_previous']['data']
+        response = response["_previous"]["data"]
         for i in range(num):
             image = image_name[i]
             final_path = image
-            root_dir = get_config('RESOURCES_OUTPUT_ROOT_DIR')
+            root_dir = get_config("RESOURCES_OUTPUT_ROOT_DIR")
             if root_dir is not None:
-                root_dir = root_dir if root_dir.startswith("/") else os.getcwd() + "/" + root_dir
+                root_dir = (
+                    root_dir
+                    if root_dir.startswith("/")
+                    else os.getcwd() + "/" + root_dir
+                )
                 root_dir = root_dir if root_dir.endswith("/") else root_dir + "/"
                 final_path = root_dir + image
             else:
                 final_path = os.getcwd() + "/" + image
-            url = response[i]['url']
+            url = response[i]["url"]
             data = requests.get(url).content
             try:
                 with open(final_path, mode="wb") as img:
                     img.write(data)
-                with open(final_path, 'rb') as img:
-                    resource = ResourceHelper.make_written_file_resource(file_name=image_name[i],
-                                                          agent_id=self.agent_id, file=img,channel="OUTPUT")
+                with open(final_path, "rb") as img:
+                    resource = ResourceHelper.make_written_file_resource(
+                        file_name=image_name[i],
+                        agent_id=self.agent_id,
+                        file=img,
+                        channel="OUTPUT",
+                    )
                     if resource is not None:
                         session.add(resource)
                         session.commit()

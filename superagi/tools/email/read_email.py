@@ -13,9 +13,16 @@ from email.header import decode_header
 
 
 class ReadEmailInput(BaseModel):
-    imap_folder: str = Field(..., description="Email folder to read from. default value is \"INBOX\"")
-    page: int = Field(..., description="The index of the page result the function should resturn. Defaults to 0, the first page.")
-    limit: int = Field(..., description="Number of emails to fetch in one cycle. Defaults to 5.")
+    imap_folder: str = Field(
+        ..., description='Email folder to read from. default value is "INBOX"'
+    )
+    page: int = Field(
+        ...,
+        description="The index of the page result the function should resturn. Defaults to 0, the first page.",
+    )
+    limit: int = Field(
+        ..., description="Number of emails to fetch in one cycle. Defaults to 5."
+    )
 
 
 class ReadEmailTool(BaseTool):
@@ -23,9 +30,11 @@ class ReadEmailTool(BaseTool):
     args_schema: Type[BaseModel] = ReadEmailInput
     description: str = "Read emails from an IMAP mailbox"
 
-    def _execute(self, imap_folder: str = "INBOX", page: int = 0, limit: int = 5) -> str:
-        email_sender = get_config('EMAIL_ADDRESS')
-        email_password = get_config('EMAIL_PASSWORD')
+    def _execute(
+        self, imap_folder: str = "INBOX", page: int = 0, limit: int = 5
+    ) -> str:
+        email_sender = get_config("EMAIL_ADDRESS")
+        email_password = get_config("EMAIL_PASSWORD")
         if email_sender == "":
             return "Error: Email Not Sent. Enter a valid Email Address."
         if email_password == "":
@@ -40,8 +49,12 @@ class ReadEmailTool(BaseTool):
             for response in msg:
                 if isinstance(response, tuple):
                     msg = email.message_from_bytes(response[1])
-                    email_msg["From"], email_msg["To"], email_msg["Date"], email_msg[
-                        "Subject"] = ReadEmail().obtain_header(msg)
+                    (
+                        email_msg["From"],
+                        email_msg["To"],
+                        email_msg["Date"],
+                        email_msg["Subject"],
+                    ) = ReadEmail().obtain_header(msg)
                     if msg.is_multipart():
                         for part in msg.walk():
                             content_type = part.get_content_type()
@@ -50,17 +63,29 @@ class ReadEmailTool(BaseTool):
                                 body = part.get_payload(decode=True).decode()
                             except:
                                 pass
-                            if content_type == "text/plain" and "attachment" not in content_disposition:
-                                email_msg["Message Body"] = ReadEmail().clean_email_body(body)
+                            if (
+                                content_type == "text/plain"
+                                and "attachment" not in content_disposition
+                            ):
+                                email_msg[
+                                    "Message Body"
+                                ] = ReadEmail().clean_email_body(body)
                             elif "attachment" in content_disposition:
-                                ReadEmail().download_attachment(part, email_msg["Subject"])
+                                ReadEmail().download_attachment(
+                                    part, email_msg["Subject"]
+                                )
                     else:
                         content_type = msg.get_content_type()
                         body = msg.get_payload(decode=True).decode()
                         if content_type == "text/plain":
-                            email_msg["Message Body"] = ReadEmail().clean_email_body(body)
+                            email_msg["Message Body"] = ReadEmail().clean_email_body(
+                                body
+                            )
             messages.append(email_msg)
-            if TokenCounter.count_text_tokens(json.dumps(messages)) > self.max_token_limit:
+            if (
+                TokenCounter.count_text_tokens(json.dumps(messages))
+                > self.max_token_limit
+            ):
                 break
 
         conn.logout()

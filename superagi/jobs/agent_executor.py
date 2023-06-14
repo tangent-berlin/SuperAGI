@@ -1,7 +1,7 @@
 # from superagi.models.types.agent_with_config import AgentWithConfig
 import importlib
 from datetime import datetime, timedelta
-from fastapi import  HTTPException
+from fastapi import HTTPException
 
 from time import time
 
@@ -77,11 +77,21 @@ class AgentExecutor:
         project = session.query(Project).filter(Project.id == agent.project_id).first()
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        organisation = session.query(Organisation).filter(Organisation.id == project.organisation_id).first()
+        organisation = (
+            session.query(Organisation)
+            .filter(Organisation.id == project.organisation_id)
+            .first()
+        )
         if not organisation:
             raise HTTPException(status_code=404, detail="Organisation not found")
-        config = session.query(Configuration).filter(Configuration.organisation_id == organisation.id,
-                                                     Configuration.key == "model_api_key").first()
+        config = (
+            session.query(Configuration)
+            .filter(
+                Configuration.organisation_id == organisation.id,
+                Configuration.key == "model_api_key",
+            )
+            .first()
+        )
         if not config:
             raise HTTPException(status_code=404, detail="Configuration not found")
         model_api_key = decrypt_data(config.value)
@@ -92,73 +102,105 @@ class AgentExecutor:
         # try:
         engine.dispose()
         session = Session()
-        agent_execution = session.query(AgentExecution).filter(AgentExecution.id == agent_execution_id).first()
-        '''Avoiding running old agent executions'''
+        agent_execution = (
+            session.query(AgentExecution)
+            .filter(AgentExecution.id == agent_execution_id)
+            .first()
+        )
+        """Avoiding running old agent executions"""
         if agent_execution.created_at < datetime.utcnow() - timedelta(days=1):
-          return
-        agent = session.query(Agent).filter(Agent.id == agent_execution.agent_id).first()
+            return
+        agent = (
+            session.query(Agent).filter(Agent.id == agent_execution.agent_id).first()
+        )
         # if agent_execution.status == "PAUSED" or agent_execution.status == "TERMINATED" or agent_execution == "COMPLETED":
         #     return
         if agent_execution.status != "RUNNING":
-          return
+            return
 
         if not agent:
-          return "Agent Not found"
+            return "Agent Not found"
 
-        tools = [
-          ThinkingTool()
-        ]
+        tools = [ThinkingTool()]
 
         parsed_config = Agent.fetch_configuration(session, agent.id)
-        max_iterations = (parsed_config["max_iterations"])
+        max_iterations = parsed_config["max_iterations"]
         total_calls = agent_execution.num_of_calls
 
         if max_iterations <= total_calls:
-          db_agent_execution = session.query(AgentExecution).filter(AgentExecution.id == agent_execution_id).first()
-          db_agent_execution.status = "ITERATION_LIMIT_EXCEEDED"
-          session.commit()
-          print("ITERATION_LIMIT_CROSSED")
-          return "ITERATION_LIMIT_CROSSED"
+            db_agent_execution = (
+                session.query(AgentExecution)
+                .filter(AgentExecution.id == agent_execution_id)
+                .first()
+            )
+            db_agent_execution.status = "ITERATION_LIMIT_EXCEEDED"
+            session.commit()
+            print("ITERATION_LIMIT_CROSSED")
+            return "ITERATION_LIMIT_CROSSED"
 
         parsed_config["agent_execution_id"] = agent_execution.id
 
-        model_api_key = AgentExecutor.get_model_api_key_from_execution(agent_execution, session)
+        model_api_key = AgentExecutor.get_model_api_key_from_execution(
+            agent_execution, session
+        )
 
         try:
             if parsed_config["LTM_DB"] == "Pinecone":
-                memory = VectorFactory.get_vector_storage("PineCone", "super-agent-index1", OpenAiEmbedding(model_api_key))
+                memory = VectorFactory.get_vector_storage(
+                    "PineCone", "super-agent-index1", OpenAiEmbedding(model_api_key)
+                )
             else:
-                memory = VectorFactory.get_vector_storage("PineCone", "super-agent-index1", OpenAiEmbedding(model_api_key))
+                memory = VectorFactory.get_vector_storage(
+                    "PineCone", "super-agent-index1", OpenAiEmbedding(model_api_key)
+                )
         except:
             print("Unable to setup the pinecone connection...")
             memory = None
 
-        user_tools = session.query(Tool).filter(Tool.id.in_(parsed_config["tools"])).all()
+        user_tools = (
+            session.query(Tool).filter(Tool.id.in_(parsed_config["tools"])).all()
+        )
         for tool in user_tools:
-          tool = AgentExecutor.create_object(tool.class_name, tool.folder_name, tool.file_name)
-          tools.append(tool)
+            tool = AgentExecutor.create_object(
+                tool.class_name, tool.folder_name, tool.file_name
+            )
+            tools.append(tool)
 
-        tools = self.set_default_params_tools(tools, parsed_config, agent_execution.agent_id,model_api_key=model_api_key)
+        tools = self.set_default_params_tools(
+            tools, parsed_config, agent_execution.agent_id, model_api_key=model_api_key
+        )
 
-        spawned_agent = SuperAgi(ai_name=parsed_config["name"], ai_role=parsed_config["description"],
-                               llm=OpenAi(model=parsed_config["model"],api_key=model_api_key), tools=tools, memory=memory,
-                               agent_config=parsed_config)
+        spawned_agent = SuperAgi(
+            ai_name=parsed_config["name"],
+            ai_role=parsed_config["description"],
+            llm=OpenAi(model=parsed_config["model"], api_key=model_api_key),
+            tools=tools,
+            memory=memory,
+            agent_config=parsed_config,
+        )
 
-        agent_template_step = session.query(AgentTemplateStep).filter(
-          AgentTemplateStep.id == agent_execution.current_step_id).first()
+        agent_template_step = (
+            session.query(AgentTemplateStep)
+            .filter(AgentTemplateStep.id == agent_execution.current_step_id)
+            .first()
+        )
         response = spawned_agent.execute(agent_template_step)
         if "retry" in response and response["retry"]:
-          response = spawned_agent.execute(agent_template_step)
+            response = spawned_agent.execute(agent_template_step)
         agent_execution.current_step_id = agent_template_step.next_step_id
         session.commit()
         if response["result"] == "COMPLETE":
-          db_agent_execution = session.query(AgentExecution).filter(AgentExecution.id == agent_execution_id).first()
-          db_agent_execution.status = "COMPLETED"
+            db_agent_execution = (
+                session.query(AgentExecution)
+                .filter(AgentExecution.id == agent_execution_id)
+                .first()
+            )
+            db_agent_execution.status = "COMPLETED"
 
-          session.commit()
+            session.commit()
         else:
-          print("Starting next job for agent execution id: ", agent_execution_id)
-          superagi.worker.execute_agent.delay(agent_execution_id, datetime.now())
+            print("Starting next job for agent execution id: ", agent_execution_id)
+            superagi.worker.execute_agent.delay(agent_execution_id, datetime.now())
 
         session.close()
         # except Exception as exception:
@@ -170,15 +212,24 @@ class AgentExecutor:
     def set_default_params_tools(self, tools, parsed_config, agent_id, model_api_key):
         new_tools = []
         for tool in tools:
-            if hasattr(tool, 'goals'):
+            if hasattr(tool, "goals"):
                 tool.goals = parsed_config["goal"]
-            if hasattr(tool, 'llm') and (parsed_config["model"] == "gpt4" or parsed_config["model"] == "gpt-3.5-turbo"):
-                tool.llm = OpenAi(model="gpt-3.5-turbo",api_key=model_api_key, temperature=0.3)
-            elif hasattr(tool, 'llm'):
-                tool.llm = OpenAi(model=parsed_config["model"], api_key=model_api_key, temperature=0.3)
-            if hasattr(tool,'image_llm'):
-                tool.image_llm = OpenAi(model=parsed_config["model"],api_key=model_api_key)
-            if hasattr(tool, 'agent_id'):
+            if hasattr(tool, "llm") and (
+                parsed_config["model"] == "gpt4"
+                or parsed_config["model"] == "gpt-3.5-turbo"
+            ):
+                tool.llm = OpenAi(
+                    model="gpt-3.5-turbo", api_key=model_api_key, temperature=0.3
+                )
+            elif hasattr(tool, "llm"):
+                tool.llm = OpenAi(
+                    model=parsed_config["model"], api_key=model_api_key, temperature=0.3
+                )
+            if hasattr(tool, "image_llm"):
+                tool.image_llm = OpenAi(
+                    model=parsed_config["model"], api_key=model_api_key
+                )
+            if hasattr(tool, "agent_id"):
                 tool.agent_id = agent_id
             new_tools.append(tool)
         return tools

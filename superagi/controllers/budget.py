@@ -12,14 +12,13 @@ router = APIRouter()
 
 # CRUD Operations
 @router.post("/add", response_model=sqlalchemy_to_pydantic(Budget), status_code=201)
-def create_budget(budget: sqlalchemy_to_pydantic(Budget, exclude=["id"]),
-                  Authorize: AuthJWT = Depends(check_auth)):
+def create_budget(
+    budget: sqlalchemy_to_pydantic(Budget, exclude=["id"]),
+    Authorize: AuthJWT = Depends(check_auth),
+):
     """Create new budget"""
 
-    new_budget = Budget(
-        budget=budget.budget,
-        cycle=budget.cycle
-    )
+    new_budget = Budget(budget=budget.budget, cycle=budget.cycle)
     db.session.add(new_budget)
     db.session.commit()
 
@@ -27,8 +26,7 @@ def create_budget(budget: sqlalchemy_to_pydantic(Budget, exclude=["id"]),
 
 
 @router.get("/get/{budget_id}", response_model=sqlalchemy_to_pydantic(Budget))
-def get_budget(budget_id: int,
-               Authorize: AuthJWT = Depends(check_auth)):
+def get_budget(budget_id: int, Authorize: AuthJWT = Depends(check_auth)):
     """Get a budget by budget_id"""
 
     db_budget = db.session.query(Budget).filter(Budget.id == budget_id).first()
@@ -38,8 +36,11 @@ def get_budget(budget_id: int,
 
 
 @router.put("/update/{budget_id}", response_model=sqlalchemy_to_pydantic(Budget))
-def update_budget(budget_id: int, budget: sqlalchemy_to_pydantic(Budget, exclude=["id"]),
-                  Authorize: AuthJWT = Depends(check_auth)):
+def update_budget(
+    budget_id: int,
+    budget: sqlalchemy_to_pydantic(Budget, exclude=["id"]),
+    Authorize: AuthJWT = Depends(check_auth),
+):
     """Update budget details by budget_id"""
 
     db_budget = db.session.query(Budget).filter(Budget.id == budget_id).first()

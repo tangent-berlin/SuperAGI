@@ -10,13 +10,14 @@ from superagi.config.config import get_config
 
 class SchemaSettings:
     """Configuration for the pydantic model."""
+
     extra = Extra.forbid
     arbitrary_types_allowed = True
 
 
 def extract_valid_parameters(
-        inferred_type: Type[BaseModel],
-        function: Callable,
+    inferred_type: Type[BaseModel],
+    function: Callable,
 ) -> dict:
     """Get the arguments from a function's signature."""
     schema = inferred_type.schema()["properties"]
@@ -25,7 +26,7 @@ def extract_valid_parameters(
 
 
 def _construct_model_subset(
-        model_name: str, original_model: BaseModel, required_fields: list
+    model_name: str, original_model: BaseModel, required_fields: list
 ) -> Type[BaseModel]:
     """Create a pydantic model with only a subset of model's fields."""
     fields = {
@@ -40,8 +41,8 @@ def _construct_model_subset(
 
 
 def create_function_schema(
-        schema_name: str,
-        function: Callable,
+    schema_name: str,
+    function: Callable,
 ) -> Type[BaseModel]:
     """Create a pydantic schema from a function's signature."""
     validated = validate_arguments(function, config=SchemaSettings)  # type: ignore
@@ -79,8 +80,8 @@ class BaseTool(BaseModel):
         return get_config("MAX_TOOL_TOKEN_LIMIT", 600)
 
     def _parse_input(
-            self,
-            tool_input: Union[str, Dict],
+        self,
+        tool_input: Union[str, Dict],
     ) -> Union[str, Dict[str, Any]]:
         """Convert tool input to pydantic model."""
         input_args = self.args_schema
@@ -103,19 +104,13 @@ class BaseTool(BaseModel):
         else:
             return (), tool_input
 
-    def execute(
-            self,
-            tool_input: Union[str, Dict],
-            **kwargs: Any
-    ) -> Any:
+    def execute(self, tool_input: Union[str, Dict], **kwargs: Any) -> Any:
         """Run the tool."""
         parsed_input = self._parse_input(tool_input)
 
         try:
             tool_args, tool_kwargs = self._to_args_and_kwargs(parsed_input)
-            observation = (
-                self._execute(*tool_args, **tool_kwargs)
-            )
+            observation = self._execute(*tool_args, **tool_kwargs)
         except (Exception, KeyboardInterrupt) as e:
             raise e
         return observation
@@ -159,8 +154,11 @@ class FunctionalTool(BaseTool):
         return cls
 
 
-def tool(*args: Union[str, Callable], return_direct: bool = False,
-         args_schema: Optional[Type[BaseModel]] = None) -> Callable:
+def tool(
+    *args: Union[str, Callable],
+    return_direct: bool = False,
+    args_schema: Optional[Type[BaseModel]] = None,
+) -> Callable:
     def decorator(func: Callable) -> Callable:
         nonlocal args_schema
 
@@ -179,5 +177,3 @@ def tool(*args: Union[str, Callable], return_direct: bool = False,
         return decorator(args[0])
     else:
         return decorator
-
-

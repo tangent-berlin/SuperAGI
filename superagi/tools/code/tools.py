@@ -13,18 +13,16 @@ class CodingSchema(BaseModel):
         description="Coding task description.",
     )
 
+
 class CodingTool(BaseTool):
     llm: Optional[BaseLlm] = None
     name = "CodingTool"
-    description = (
-        "Useful for writing, reviewing, and refactoring code. Can also fix bugs and explain programming concepts."
-    )
+    description = "Useful for writing, reviewing, and refactoring code. Can also fix bugs and explain programming concepts."
     args_schema: Type[CodingSchema] = CodingSchema
     goals: List[str] = []
 
     class Config:
         arbitrary_types_allowed = True
-
 
     def _execute(self, task_description: str):
         try:
@@ -40,7 +38,9 @@ class CodingTool(BaseTool):
             Write code to accomplish the following:
             {task}
             """
-            prompt = prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals))
+            prompt = prompt.replace(
+                "{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals)
+            )
             prompt = prompt.replace("{task}", task_description)
             messages = [{"role": "system", "content": prompt}]
             result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)

@@ -8,9 +8,18 @@ from superagi.config.config import get_config
 
 
 class OpenAi(BaseLlm):
-    def __init__(self, api_key, image_model=None, model="gpt-4", temperature=0.6, max_tokens=4032, top_p=1,
-                 frequency_penalty=0,
-                 presence_penalty=0, number_of_results=1):
+    def __init__(
+        self,
+        api_key,
+        image_model=None,
+        model="gpt-4",
+        temperature=0.6,
+        max_tokens=4032,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        number_of_results=1,
+    ):
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
@@ -39,7 +48,7 @@ class OpenAi(BaseLlm):
                 max_tokens=max_tokens,
                 top_p=self.top_p,
                 frequency_penalty=self.frequency_penalty,
-                presence_penalty=self.presence_penalty
+                presence_penalty=self.presence_penalty,
             )
             content = response.choices[0].message["content"]
             return {"response": response, "content": content}
@@ -48,9 +57,5 @@ class OpenAi(BaseLlm):
             return {"error": exception}
 
     def generate_image(self, prompt: str, size: int = 512, num: int = 2):
-        response = openai.Image.create(
-            prompt=prompt,
-            n=num,
-            size=f"{size}x{size}"
-        )
+        response = openai.Image.create(prompt=prompt, n=num, size=f"{size}x{size}")
         return response

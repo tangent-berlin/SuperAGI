@@ -1,9 +1,9 @@
-from sqlalchemy import Column, Integer, String,ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from superagi.models.base_model import DBBaseModel
 
 
 class Project(DBBaseModel):
-    __tablename__ = 'projects'
+    __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -15,12 +15,19 @@ class Project(DBBaseModel):
 
     @classmethod
     def find_or_create_default_project(cls, session, organisation_id):
-        project = session.query(Project).filter(Project.organisation_id == organisation_id, Project.name == "Default Project").first()
+        project = (
+            session.query(Project)
+            .filter(
+                Project.organisation_id == organisation_id,
+                Project.name == "Default Project",
+            )
+            .first()
+        )
         if project is None:
             default_project = Project(
                 name="Default Project",
                 organisation_id=organisation_id,
-                description="New Default Project"
+                description="New Default Project",
             )
             session.add(default_project)
             session.commit()

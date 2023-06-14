@@ -23,7 +23,7 @@ class EditIssueTool(JiraTool):
 
     def _execute(self, key: str, fields: dict):
         jira = JiraTool.build_jira_instance()
-        issues = jira.search_issues('key=')
+        issues = jira.search_issues("key=")
         if len(issues) > 0:
             issues[0].update(fields=fields)
             return f"Issue '{issues[0].key}' created successfully!"

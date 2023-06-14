@@ -26,16 +26,21 @@ router = APIRouter()
 
 
 s3 = boto3.client(
-    's3',
+    "s3",
     aws_access_key_id=get_config("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=get_config("AWS_SECRET_ACCESS_KEY"),
 )
 
 
 @router.post("/add/{agent_id}", status_code=201)
-async def upload(agent_id: int, file: UploadFile = File(...), name=Form(...), size=Form(...), type=Form(...),
-                 Authorize: AuthJWT = Depends(check_auth)):
-
+async def upload(
+    agent_id: int,
+    file: UploadFile = File(...),
+    name=Form(...),
+    size=Form(...),
+    type=Form(...),
+    Authorize: AuthJWT = Depends(check_auth),
+):
     """Upload a file as resource for agent"""
 
     agent = db.session.query(Agent).filter(Agent.id == agent_id).first()
@@ -59,16 +64,36 @@ async def upload(agent_id: int, file: UploadFile = File(...), name=Form(...), si
             file.file.close()
     elif storage_type == "S3":
         bucket_name = get_config("BUCKET_NAME")
-        file_name = file.filename.split('.')
-        path = 'input/'+file_name[0]+ '_'+str(datetime.datetime.now()).replace(' ','').replace('.','').replace(':','')+'.'+file_name[1]
+        file_name = file.filename.split(".")
+        path = (
+            "input/"
+            + file_name[0]
+            + "_"
+            + str(datetime.datetime.now())
+            .replace(" ", "")
+            .replace(".", "")
+            .replace(":", "")
+            + "."
+            + file_name[1]
+        )
         try:
             s3.upload_fileobj(file.file, bucket_name, path)
             print("File uploaded successfully!")
         except NoCredentialsError:
-            raise HTTPException(status_code=500, detail="AWS credentials not found. Check your configuration.")
+            raise HTTPException(
+                status_code=500,
+                detail="AWS credentials not found. Check your configuration.",
+            )
 
-    resource = Resource(name=name, path=path, storage_type=storage_type, size=size, type=type, channel="INPUT",
-                        agent_id=agent.id)
+    resource = Resource(
+        name=name,
+        path=path,
+        storage_type=storage_type,
+        size=size,
+        type=type,
+        channel="INPUT",
+        agent_id=agent.id,
+    )
     db.session.add(resource)
     db.session.commit()
     db.session.flush()
@@ -77,9 +102,7 @@ async def upload(agent_id: int, file: UploadFile = File(...), name=Form(...), si
 
 
 @router.get("/get/all/{agent_id}", status_code=200)
-def get_all_resources(agent_id: int,
-                      Authorize: AuthJWT = Depends(check_auth)):
-
+def get_all_resources(agent_id: int, Authorize: AuthJWT = Depends(check_auth)):
     """Get all resources for an agent"""
 
     resources = db.session.query(Resource).filter(Resource.agent_id == agent_id).all()
@@ -87,9 +110,7 @@ def get_all_resources(agent_id: int,
 
 
 @router.get("/get/{resource_id}", status_code=200)
-def download_file_by_id(resource_id: int,
-                        Authorize: AuthJWT = Depends(check_auth)):
-
+def download_file_by_id(resource_id: int, Authorize: AuthJWT = Depends(check_auth)):
     """Download a particular resource by resource_id"""
 
     resource = db.session.query(Resource).filter(Resource.id == resource_id).first()
@@ -113,7 +134,5 @@ def download_file_by_id(resource_id: int,
     return StreamingResponse(
         content,
         media_type="application/octet-stream",
-        headers={
-            "Content-Disposition": f"attachment; filename={file_name}"
-        }
+        headers={"Content-Disposition": f"attachment; filename={file_name}"},
     )

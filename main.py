@@ -20,7 +20,9 @@ from superagi.config.config import get_config
 from superagi.controllers.agent import router as agent_router
 from superagi.controllers.agent_config import router as agent_config_router
 from superagi.controllers.agent_execution import router as agent_execution_router
-from superagi.controllers.agent_execution_feed import router as agent_execution_feed_router
+from superagi.controllers.agent_execution_feed import (
+    router as agent_execution_feed_router,
+)
 from superagi.controllers.budget import router as budget_router
 from superagi.controllers.organisation import router as organisation_router
 from superagi.controllers.project import router as project_router
@@ -38,15 +40,15 @@ from superagi.tools.base_tool import BaseTool
 
 app = FastAPI()
 
-database_url = get_config('POSTGRES_URL')
-db_username = get_config('DB_USERNAME')
-db_password = get_config('DB_PASSWORD')
-db_name = get_config('DB_NAME')
+database_url = get_config("POSTGRES_URL")
+db_username = get_config("DB_USERNAME")
+db_password = get_config("DB_PASSWORD")
+db_name = get_config("DB_NAME")
 
 if db_username is None:
-    db_url = f'postgresql://{database_url}/{db_name}'
+    db_url = f"postgresql://{database_url}/{db_name}"
 else:
-    db_url = f'postgresql://{db_username}:{db_password}@{database_url}/{db_name}'
+    db_url = f"postgresql://{db_username}:{db_password}@{database_url}/{db_name}"
 
 engine = create_engine(db_url)
 # SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -85,11 +87,7 @@ app.include_router(agent_config_router, prefix="/agentconfigs")
 app.include_router(agent_execution_router, prefix="/agentexecutions")
 app.include_router(agent_execution_feed_router, prefix="/agentexecutionfeeds")
 app.include_router(resources_router, prefix="/resources")
-app.include_router(config_router,prefix="/configs")
-
-
-
-
+app.include_router(config_router, prefix="/configs")
 
 
 # in production you can use Settings management
@@ -106,6 +104,7 @@ def create_access_token(email, Authorize: AuthJWT = Depends()):
     access_token = Authorize.create_access_token(subject=email, expires_time=expires)
     return access_token
 
+
 # callback to get your configuration
 @AuthJWT.load_config
 def get_config():
@@ -116,10 +115,7 @@ def get_config():
 # in production, you can tweak performance using orjson response
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
 Session = sessionmaker(bind=engine)
@@ -127,7 +123,9 @@ session = Session()
 organisation = session.query(Organisation).filter_by(id=1).first()
 
 
-def add_or_update_tool(db: Session, tool_name: str, folder_name: str, class_name: str, file_name: str):
+def add_or_update_tool(
+    db: Session, tool_name: str, folder_name: str, class_name: str, file_name: str
+):
     # Check if a record with the given tool name already exists
     tool = db.query(Tool).filter_by(name=tool_name).first()
 
@@ -138,7 +136,12 @@ def add_or_update_tool(db: Session, tool_name: str, folder_name: str, class_name
         tool.file_name = file_name
     else:
         # Create a new tool record
-        tool = Tool(name=tool_name, folder_name=folder_name, class_name=class_name, file_name=file_name)
+        tool = Tool(
+            name=tool_name,
+            folder_name=folder_name,
+            class_name=class_name,
+            file_name=file_name,
+        )
         db.add(tool)
 
     db.commit()
@@ -154,17 +157,21 @@ def get_classes_in_file(file_path):
     # Iterate over all members of the module
     for name, member in inspect.getmembers(module):
         # Check if the member is a class and extends BaseTool
-        if inspect.isclass(member) and issubclass(member, BaseTool) and member != BaseTool:
+        if (
+            inspect.isclass(member)
+            and issubclass(member, BaseTool)
+            and member != BaseTool
+        ):
             class_dict = {}
-            class_dict['class_name'] = member.__name__
+            class_dict["class_name"] = member.__name__
 
             class_obj = getattr(module, member.__name__)
             try:
                 obj = class_obj()
-                class_dict['class_attribute'] = obj.name
+                class_dict["class_attribute"] = obj.name
                 classes.append(class_dict)
             except:
-                class_dict['class_attribute'] = None
+                class_dict["class_attribute"] = None
     return classes
 
 
@@ -181,8 +188,15 @@ def load_module_from_file(file_path):
 # Function to process the files and extract class information
 def process_files(folder_path):
     existing_tools = session.query(Tool).all()
-    existing_tools = [Tool(id=None, name=tool.name, folder_name=tool.folder_name, class_name=tool.class_name) for tool
-                      in existing_tools]
+    existing_tools = [
+        Tool(
+            id=None,
+            name=tool.name,
+            folder_name=tool.folder_name,
+            class_name=tool.class_name,
+        )
+        for tool in existing_tools
+    ]
 
     new_tools = []
     # Iterate over all subfolders
@@ -200,34 +214,57 @@ def process_files(folder_path):
                     #                     clazz["class_name"].endswith("Tool") and clazz["class_name"] != "BaseTool"]
                     for clazz in classes:
                         if clazz["class_attribute"] is not None:
-                            new_tool = Tool(class_name=clazz["class_name"], folder_name=folder_name,
-                                            file_name=file_name,
-                                            name=clazz["class_attribute"])
+                            new_tool = Tool(
+                                class_name=clazz["class_name"],
+                                folder_name=folder_name,
+                                file_name=file_name,
+                                name=clazz["class_attribute"],
+                            )
                             new_tools.append(new_tool)
 
     for tool in new_tools:
-        add_or_update_tool(session, tool_name=tool.name, file_name=tool.file_name, folder_name=tool.folder_name,
-                           class_name=tool.class_name)
+        add_or_update_tool(
+            session,
+            tool_name=tool.name,
+            file_name=tool.file_name,
+            folder_name=tool.folder_name,
+            class_name=tool.class_name,
+        )
+
 
 def build_single_step_agent():
-    agent_template = session.query(AgentTemplate).filter(AgentTemplate.name == "Goal Based Agent").first()
+    agent_template = (
+        session.query(AgentTemplate)
+        .filter(AgentTemplate.name == "Goal Based Agent")
+        .first()
+    )
 
     if agent_template is None:
-        agent_template = AgentTemplate(name="Goal Based Agent", description="Goal based agent")
+        agent_template = AgentTemplate(
+            name="Goal Based Agent", description="Goal based agent"
+        )
         session.add(agent_template)
         session.commit()
 
     # step will have a prompt
     # output of step is either tasks or set commands
-    first_step = session.query(AgentTemplateStep).filter(AgentTemplateStep.unique_id == "gb1").first()
+    first_step = (
+        session.query(AgentTemplateStep)
+        .filter(AgentTemplateStep.unique_id == "gb1")
+        .first()
+    )
     output = AgentPromptBuilder.get_super_agi_single_prompt()
     if first_step is None:
-        first_step = AgentTemplateStep(unique_id="gb1",
-                                       prompt=output["prompt"], variables=str(output["variables"]),
-                                       agent_template_id=agent_template.id, output_type="tools",
-                                       step_type="TRIGGER",
-                                       history_enabled=True,
-                                       completion_prompt= "Determine which next tool to use, and respond using the format specified above:")
+        first_step = AgentTemplateStep(
+            unique_id="gb1",
+            prompt=output["prompt"],
+            variables=str(output["variables"]),
+            agent_template_id=agent_template.id,
+            output_type="tools",
+            step_type="TRIGGER",
+            history_enabled=True,
+            completion_prompt="Determine which next tool to use, and respond using the format specified above:",
+        )
         session.add(first_step)
         session.commit()
     else:
@@ -239,58 +276,90 @@ def build_single_step_agent():
     first_step.next_step_id = first_step.id
     session.commit()
 
+
 def build_task_based_agents():
-    agent_template = session.query(AgentTemplate).filter(AgentTemplate.name == "Task Queue Agent With Seed").first()
+    agent_template = (
+        session.query(AgentTemplate)
+        .filter(AgentTemplate.name == "Task Queue Agent With Seed")
+        .first()
+    )
     if agent_template is None:
-        agent_template = AgentTemplate(name="Task Queue Agent With Seed", description="Task queue based agent")
+        agent_template = AgentTemplate(
+            name="Task Queue Agent With Seed", description="Task queue based agent"
+        )
         session.add(agent_template)
         session.commit()
 
     output = AgentPromptBuilder.start_task_based()
 
-    template_step1 = session.query(AgentTemplateStep).filter(AgentTemplateStep.unique_id == "tb1").first()
+    template_step1 = (
+        session.query(AgentTemplateStep)
+        .filter(AgentTemplateStep.unique_id == "tb1")
+        .first()
+    )
     if template_step1 is None:
-        template_step1 = AgentTemplateStep(unique_id="tb1",
-                                prompt=output["prompt"], variables=str(output["variables"]),
-                                step_type="TRIGGER",
-                                agent_template_id=agent_template.id, next_step_id=-1,
-                                output_type="tasks")
+        template_step1 = AgentTemplateStep(
+            unique_id="tb1",
+            prompt=output["prompt"],
+            variables=str(output["variables"]),
+            step_type="TRIGGER",
+            agent_template_id=agent_template.id,
+            next_step_id=-1,
+            output_type="tasks",
+        )
         session.add(template_step1)
     else:
-        template_step1.prompt=output["prompt"]
-        template_step1.variables=str(output["variables"])
-        template_step1.output_type="tasks"
+        template_step1.prompt = output["prompt"]
+        template_step1.variables = str(output["variables"])
+        template_step1.output_type = "tasks"
         session.commit()
 
-    template_step2 = session.query(AgentTemplateStep).filter(AgentTemplateStep.unique_id == "tb2").first()
+    template_step2 = (
+        session.query(AgentTemplateStep)
+        .filter(AgentTemplateStep.unique_id == "tb2")
+        .first()
+    )
     output = AgentPromptBuilder.create_tasks()
     if template_step2 is None:
-        template_step2 = AgentTemplateStep(unique_id="tb2",
-                                           prompt=output["prompt"], variables=str(output["variables"]),
-                                           step_type="NORMAL",
-                                           agent_template_id=agent_template.id, next_step_id=-1,
-                                           output_type="tasks")
+        template_step2 = AgentTemplateStep(
+            unique_id="tb2",
+            prompt=output["prompt"],
+            variables=str(output["variables"]),
+            step_type="NORMAL",
+            agent_template_id=agent_template.id,
+            next_step_id=-1,
+            output_type="tasks",
+        )
         session.add(template_step2)
     else:
-        template_step2.prompt=output["prompt"]
-        template_step2.variables=str(output["variables"])
-        template_step2.output_type="tasks"
+        template_step2.prompt = output["prompt"]
+        template_step2.variables = str(output["variables"])
+        template_step2.output_type = "tasks"
         session.commit()
 
-    template_step3 = session.query(AgentTemplateStep).filter(AgentTemplateStep.unique_id == "tb3").first()
+    template_step3 = (
+        session.query(AgentTemplateStep)
+        .filter(AgentTemplateStep.unique_id == "tb3")
+        .first()
+    )
 
     output = AgentPromptBuilder.analyse_task()
     if template_step3 is None:
-        template_step3 = AgentTemplateStep(unique_id="tb3",
-                                           prompt=output["prompt"], variables=str(output["variables"]),
-                                           step_type="NORMAL",
-                                           agent_template_id=agent_template.id, next_step_id=-1, output_type="tools")
+        template_step3 = AgentTemplateStep(
+            unique_id="tb3",
+            prompt=output["prompt"],
+            variables=str(output["variables"]),
+            step_type="NORMAL",
+            agent_template_id=agent_template.id,
+            next_step_id=-1,
+            output_type="tools",
+        )
 
         session.add(template_step3)
     else:
-        template_step3.prompt=output["prompt"]
-        template_step3.variables=str(output["variables"])
-        template_step3.output_type="tools"
+        template_step3.prompt = output["prompt"]
+        template_step3.variables = str(output["variables"])
+        template_step3.output_type = "tools"
         session.commit()
 
     session.commit()
@@ -298,6 +367,7 @@ def build_task_based_agents():
     template_step3.next_step_id = template_step2.id
     template_step2.next_step_id = template_step3.id
     session.commit()
+
 
 build_single_step_agent()
 build_task_based_agents()
@@ -311,18 +381,19 @@ if folder_path is None:
 process_files(folder_path)
 session.close()
 
-@app.post('/login')
+
+@app.post("/login")
 def login(request: LoginRequest, Authorize: AuthJWT = Depends()):
     """Login API for email and password based login"""
 
     email_to_find = request.email
-    user:User = db.session.query(User).filter(User.email == email_to_find).first()
+    user: User = db.session.query(User).filter(User.email == email_to_find).first()
 
-    if user ==None or request.email != user.email or request.password != user.password:
-        raise HTTPException(status_code=401,detail="Bad username or password")
+    if user == None or request.email != user.email or request.password != user.password:
+        raise HTTPException(status_code=401, detail="Bad username or password")
 
     # subject identifier for who this token is for example id or username from database
-    access_token = create_access_token(user.email,Authorize)
+    access_token = create_access_token(user.email, Authorize)
     return {"access_token": access_token}
 
 
@@ -330,52 +401,53 @@ def login(request: LoginRequest, Authorize: AuthJWT = Depends()):
 #     access_token = Authorize.create_access_token(subject=user_email)
 #     return access_token
 
-@app.get('/github-login')
+
+@app.get("/github-login")
 def github_login():
     """GitHub login"""
 
     github_client_id = ""
-    return RedirectResponse(f'https://github.com/login/oauth/authorize?scope=user:email&client_id={github_client_id}')
+    return RedirectResponse(
+        f"https://github.com/login/oauth/authorize?scope=user:email&client_id={github_client_id}"
+    )
 
 
-@app.get('/github-auth')
+@app.get("/github-auth")
 def github_auth_handler(code: str = Query(...), Authorize: AuthJWT = Depends()):
     """GitHub login callback"""
 
-    github_token_url = 'https://github.com/login/oauth/access_token'
+    github_token_url = "https://github.com/login/oauth/access_token"
     github_client_id = superagi.config.config.get_config("GITHUB_CLIENT_ID")
     github_client_secret = superagi.config.config.get_config("GITHUB_CLIENT_SECRET")
 
-    frontend_url = superagi.config.config.get_config("FRONTEND_URL", "http://localhost:3000")
+    frontend_url = superagi.config.config.get_config(
+        "FRONTEND_URL", "http://localhost:3000"
+    )
     params = {
-        'client_id': github_client_id,
-        'client_secret': github_client_secret,
-        'code': code
+        "client_id": github_client_id,
+        "client_secret": github_client_secret,
+        "code": code,
     }
-    headers = {
-        'Accept': 'application/json'
-    }
+    headers = {"Accept": "application/json"}
     response = requests.post(github_token_url, params=params, headers=headers)
     if response.ok:
         data = response.json()
-        access_token = data.get('access_token')
-        github_api_url = 'https://api.github.com/user'
-        headers = {
-            'Authorization': f'Bearer {access_token}'
-        }
+        access_token = data.get("access_token")
+        github_api_url = "https://api.github.com/user"
+        headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(github_api_url, headers=headers)
         if response.ok:
             user_data = response.json()
             user_email = user_data["email"]
             if user_email is None:
                 user_email = user_data["login"] + "@github.com"
-            db_user: User = db.session.query(User).filter(User.email == user_email).first()
+            db_user: User = (
+                db.session.query(User).filter(User.email == user_email).first()
+            )
             if db_user is not None:
                 jwt_token = create_access_token(user_email, Authorize)
                 redirect_url_success = f"{frontend_url}?access_token={jwt_token}"
                 return RedirectResponse(url=redirect_url_success)
-
-
 
             user = User(name=user_data["name"], email=user_email)
             db.session.add(user)
@@ -392,7 +464,7 @@ def github_auth_handler(code: str = Query(...), Authorize: AuthJWT = Depends()):
         return RedirectResponse(url=redirect_url_failure)
 
 
-@app.get('/user')
+@app.get("/user")
 def user(Authorize: AuthJWT = Depends()):
     """API to get current logged in User"""
 
@@ -408,17 +480,22 @@ async def root(Authorize: AuthJWT = Depends()):
     try:
         Authorize.jwt_required()
         current_user_email = Authorize.get_jwt_subject()
-        current_user = session.query(User).filter(User.email == current_user_email).first()
+        current_user = (
+            session.query(User).filter(User.email == current_user_email).first()
+        )
         return current_user
     except:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
 
 
 # #Unprotected route
 @app.get("/hello/{name}")
-async def say_hello(name: str,Authorize:AuthJWT=Depends()):
+async def say_hello(name: str, Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
     return {"message": f"Hello {name}"}
+
 
 # # __________________TO RUN____________________________
 # # uvicorn main:app --host 0.0.0.0 --port 8001 --reload

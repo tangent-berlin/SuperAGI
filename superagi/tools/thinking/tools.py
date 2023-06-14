@@ -17,18 +17,16 @@ class ThinkingSchema(BaseModel):
         description="Task description which needs reasoning.",
     )
 
+
 class ThinkingTool(BaseTool):
     llm: Optional[BaseLlm] = None
     name = "ThinkingTool"
-    description = (
-        "Intelligent problem-solving assistant that comprehends tasks, identifies key variables, and makes efficient decisions, all while providing detailed, self-driven reasoning for its choices."
-    )
+    description = "Intelligent problem-solving assistant that comprehends tasks, identifies key variables, and makes efficient decisions, all while providing detailed, self-driven reasoning for its choices."
     args_schema: Type[ThinkingSchema] = ThinkingSchema
     goals: List[str] = []
 
     class Config:
         arbitrary_types_allowed = True
-
 
     def _execute(self, task_description: str):
         try:
@@ -42,7 +40,9 @@ class ThinkingTool(BaseTool):
             and efficient. Provide a descriptive response, make decisions yourself when
             confronted with choices and provide reasoning for ideas / decisions.
             """
-            prompt = prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals))
+            prompt = prompt.replace(
+                "{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals)
+            )
             prompt = prompt.replace("{task_description}", task_description)
 
             messages = [{"role": "system", "content": prompt}]

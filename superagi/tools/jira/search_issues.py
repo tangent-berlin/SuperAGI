@@ -10,7 +10,7 @@ from superagi.tools.jira.tool import JiraTool, JiraIssueSchema
 class SearchIssueSchema(BaseModel):
     query: str = Field(
         ...,
-        description="JQL query string to search issues. For example, to find all the issues in project \"Test\" assigned to the me, you would pass in the following string: project = Test AND assignee = currentUser() or to find issues with summaries that contain the word \"test\", you would pass in the following string: summary ~ 'test'.",
+        description='JQL query string to search issues. For example, to find all the issues in project "Test" assigned to the me, you would pass in the following string: project = Test AND assignee = currentUser() or to find issues with summaries that contain the word "test", you would pass in the following string: summary ~ \'test\'.',
     )
 
 
@@ -24,7 +24,7 @@ class SearchJiraTool(JiraTool):
         issues = jira.search_issues(query)
         parsed_issues = self.parse_issues(issues)
         parsed_issues_str = (
-                "Found " + str(len(parsed_issues)) + " issues:\n" + str(parsed_issues)
+            "Found " + str(len(parsed_issues)) + " issues:\n" + str(parsed_issues)
         )
         return parsed_issues_str
 
@@ -62,6 +62,9 @@ class SearchJiraTool(JiraTool):
                     "related_issues": rel_issues,
                 }
             )
-            if TokenCounter.count_text_tokens(json.dumps(parsed)) > self.max_token_limit:
+            if (
+                TokenCounter.count_text_tokens(json.dumps(parsed))
+                > self.max_token_limit
+            ):
                 break
         return parsed

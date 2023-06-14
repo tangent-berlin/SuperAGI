@@ -12,9 +12,10 @@ router = APIRouter()
 
 # CRUD Operations
 @router.post("/add", response_model=sqlalchemy_to_pydantic(Project), status_code=201)
-def create_project(project: sqlalchemy_to_pydantic(Project, exclude=["id"]),
-                   Authorize: AuthJWT = Depends(check_auth)):
-
+def create_project(
+    project: sqlalchemy_to_pydantic(Project, exclude=["id"]),
+    Authorize: AuthJWT = Depends(check_auth),
+):
     """Create a new project"""
 
     print("Organisation_id : ", project.organisation_id)
@@ -26,7 +27,7 @@ def create_project(project: sqlalchemy_to_pydantic(Project, exclude=["id"]),
     project = Project(
         name=project.name,
         organisation_id=organisation.id,
-        description=project.description
+        description=project.description,
     )
 
     db.session.add(project)
@@ -37,7 +38,6 @@ def create_project(project: sqlalchemy_to_pydantic(Project, exclude=["id"]),
 
 @router.get("/get/{project_id}", response_model=sqlalchemy_to_pydantic(Project))
 def get_project(project_id: int, Authorize: AuthJWT = Depends(check_auth)):
-
     """Get Project details by project_id"""
 
     db_project = db.session.query(Project).filter(Project.id == project_id).first()
@@ -47,9 +47,11 @@ def get_project(project_id: int, Authorize: AuthJWT = Depends(check_auth)):
 
 
 @router.put("/update/{project_id}", response_model=sqlalchemy_to_pydantic(Project))
-def update_project(project_id: int, project: sqlalchemy_to_pydantic(Project, exclude=["id"]),
-                   Authorize: AuthJWT = Depends(check_auth)):
-
+def update_project(
+    project_id: int,
+    project: sqlalchemy_to_pydantic(Project, exclude=["id"]),
+    Authorize: AuthJWT = Depends(check_auth),
+):
     """Update a project detail by project_id"""
 
     db_project = db.session.query(Project).get(project_id)
@@ -69,15 +71,21 @@ def update_project(project_id: int, project: sqlalchemy_to_pydantic(Project, exc
 
 
 @router.get("/get/organisation/{organisation_id}")
-def get_projects_organisation(organisation_id: int,
-                              Authorize: AuthJWT = Depends(check_auth)):
-
+def get_projects_organisation(
+    organisation_id: int, Authorize: AuthJWT = Depends(check_auth)
+):
     """Get all projects by organisation_id and create default if no project"""
 
     Project.find_or_create_default_project(db.session, organisation_id)
-    projects = db.session.query(Project).filter(Project.organisation_id == organisation_id).all()
+    projects = (
+        db.session.query(Project)
+        .filter(Project.organisation_id == organisation_id)
+        .all()
+    )
     if len(projects) <= 0:
-        default_project = Project.find_or_create_default_project(db.session, organisation_id)
+        default_project = Project.find_or_create_default_project(
+            db.session, organisation_id
+        )
         projects.append(default_project)
 
     return projects

@@ -9,13 +9,13 @@ from superagi.helper.auth import check_auth
 
 router = APIRouter()
 
+
 # CRUD Operations
 @router.post("/add", response_model=sqlalchemy_to_pydantic(Tool), status_code=201)
 def create_tool(
     tool: sqlalchemy_to_pydantic(Tool, exclude=["id"]),
     Authorize: AuthJWT = Depends(check_auth),
 ):
-
     """Create a new tool"""
 
     db_tool = Tool(
@@ -34,7 +34,6 @@ def get_tool(
     tool_id: int,
     Authorize: AuthJWT = Depends(check_auth),
 ):
-
     """Get a particular tool details"""
 
     db_tool = db.session.query(Tool).filter(Tool.id == tool_id).first()
@@ -49,7 +48,6 @@ def update_tool(
     tool: sqlalchemy_to_pydantic(Tool, exclude=["id"]),
     Authorize: AuthJWT = Depends(check_auth),
 ):
-
     """Update a particular tool"""
 
     db_tool = db.session.query(Tool).filter(Tool.id == tool_id).first()
@@ -68,7 +66,6 @@ def update_tool(
 
 @router.get("/get")
 def get_tools(Authorize: AuthJWT = Depends(check_auth)):
-
     """Get all tools"""
 
     db_tools = db.session.query(Tool).all()

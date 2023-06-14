@@ -8,6 +8,7 @@ from superagi.tools.base_tool import BaseTool
 
 class ListFileInput(BaseModel):
     """Input for CopyFileTool."""
+
     directory: str = Field(..., description="Directory to list files in")
 
 

@@ -3,7 +3,6 @@ import re
 
 
 class JsonCleaner:
-
     @classmethod
     def check_and_clean_json(cls, json_string: str):
         try:
@@ -51,30 +50,35 @@ class JsonCleaner:
 
     @classmethod
     def remove_escape_sequences(cls, string):
-        return string.encode('utf-8').decode('unicode_escape').encode('raw_unicode_escape').decode('utf-8')
+        return (
+            string.encode("utf-8")
+            .decode("unicode_escape")
+            .encode("raw_unicode_escape")
+            .decode("utf-8")
+        )
 
     @classmethod
     def add_quotes_to_property_names(cls, json_string: str) -> str:
         def replace(match: re.Match) -> str:
             return f'"{match.group(1)}":'
 
-        json_string = re.sub(r'(\b\w+\b):', replace, json_string)
+        json_string = re.sub(r"(\b\w+\b):", replace, json_string)
 
         return json_string
 
     @classmethod
     def balance_braces(cls, json_string: str) -> str:
-        open_braces_count = json_string.count('{')
-        closed_braces_count = json_string.count('}')
+        open_braces_count = json_string.count("{")
+        closed_braces_count = json_string.count("}")
 
         while closed_braces_count > open_braces_count:
             json_string = json_string.rstrip("}")
             closed_braces_count -= 1
 
-        open_braces_count = json_string.count('{')
-        closed_braces_count = json_string.count('}')
+        open_braces_count = json_string.count("{")
+        closed_braces_count = json_string.count("}")
 
         if open_braces_count > closed_braces_count:
-            json_string += '}' * (open_braces_count - closed_braces_count)
+            json_string += "}" * (open_braces_count - closed_braces_count)
 
         return json_string

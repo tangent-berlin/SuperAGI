@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 
 class Resource(DBBaseModel):
-    __tablename__ = 'resources'
+    __tablename__ = "resources"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -24,6 +24,7 @@ class Resource(DBBaseModel):
 
         if storage_type not in valid_types:
             raise InvalidResourceType("Invalid resource type")
+
 
 class InvalidResourceType(Exception):
     """Custom exception for invalid resource type"""

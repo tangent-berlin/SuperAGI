@@ -14,10 +14,15 @@ from superagi.tools.base_tool import BaseTool
 
 
 class SendEmailAttachmentInput(BaseModel):
-    to: str = Field(..., description="Email Address of the Receiver, default email address is 'example@example.com'")
+    to: str = Field(
+        ...,
+        description="Email Address of the Receiver, default email address is 'example@example.com'",
+    )
     subject: str = Field(..., description="Subject of the Email to be sent")
     body: str = Field(..., description="Email Body to be sent")
-    filename: str = Field(..., description="Name of the file to be sent as an Attachment with Email")
+    filename: str = Field(
+        ..., description="Name of the file to be sent as an Attachment with Email"
+    )
 
 
 class SendEmailAttachmentTool(BaseTool):
@@ -26,17 +31,21 @@ class SendEmailAttachmentTool(BaseTool):
     description: str = "Send an Email with a file attached to it"
 
     def _execute(self, to: str, subject: str, body: str, filename: str) -> str:
-        base_path = get_config('EMAIL_ATTACHMENT_BASE_PATH')
+        base_path = get_config("EMAIL_ATTACHMENT_BASE_PATH")
         if not base_path:
             base_path = ""
         base_path = base_path + filename
         attachmentpath = base_path
         attachment = os.path.basename(attachmentpath)
-        return self.send_email_with_attachment(to, subject, body, attachmentpath, attachment)
+        return self.send_email_with_attachment(
+            to, subject, body, attachmentpath, attachment
+        )
 
-    def send_email_with_attachment(self, to, subject, body, attachment_path, attachment) -> str:
-        email_sender = get_config('EMAIL_ADDRESS')
-        email_password = get_config('EMAIL_PASSWORD')
+    def send_email_with_attachment(
+        self, to, subject, body, attachment_path, attachment
+    ) -> str:
+        email_sender = get_config("EMAIL_ADDRESS")
+        email_password = get_config("EMAIL_PASSWORD")
         if email_sender == "" or email_sender.isspace():
             return "Error: Email Not Sent. Enter a valid Email Address."
         if email_password == "" or email_password.isspace():
@@ -45,7 +54,7 @@ class SendEmailAttachmentTool(BaseTool):
         message["Subject"] = subject
         message["From"] = email_sender
         message["To"] = to
-        signature = get_config('EMAIL_SIGNATURE')
+        signature = get_config("EMAIL_SIGNATURE")
         if signature:
             body += f"\n{signature}"
         message.set_content(body)
@@ -55,21 +64,23 @@ class SendEmailAttachmentTool(BaseTool):
                 ctype = "application/octet-stream"
             maintype, subtype = ctype.split("/", 1)
             with open(attachment_path, "rb") as file:
-                message.add_attachment(file.read(), maintype=maintype, subtype=subtype, filename=attachment)
-        draft_folder = get_config('EMAIL_DRAFT_MODE_WITH_FOLDER')
-        
+                message.add_attachment(
+                    file.read(), maintype=maintype, subtype=subtype, filename=attachment
+                )
+        draft_folder = get_config("EMAIL_DRAFT_MODE_WITH_FOLDER")
+
         if message["To"] == "example@example.com" or draft_folder:
             conn = ImapEmail().imap_open(draft_folder, email_sender, email_password)
             conn.append(
                 draft_folder,
                 "",
                 imaplib.Time2Internaldate(time.time()),
-                str(message).encode("UTF-8")
+                str(message).encode("UTF-8"),
             )
             return f"Email went to {draft_folder}"
         else:
-            smtp_host = get_config('EMAIL_SMTP_HOST')
-            smtp_port = get_config('EMAIL_SMTP_PORT')
+            smtp_host = get_config("EMAIL_SMTP_HOST")
+            smtp_port = get_config("EMAIL_SMTP_PORT")
             with smtplib.SMTP(smtp_host, smtp_port) as smtp:
                 smtp.ehlo()
                 smtp.starttls()

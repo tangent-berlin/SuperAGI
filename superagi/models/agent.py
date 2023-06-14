@@ -5,13 +5,13 @@ import json
 from sqlalchemy import Column, Integer, String
 
 import superagi.models
-#from superagi.models import AgentConfiguration
+
+# from superagi.models import AgentConfiguration
 from superagi.models.base_model import DBBaseModel
 
 
-
 class Agent(DBBaseModel):
-    __tablename__ = 'agents'
+    __tablename__ = "agents"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
@@ -20,13 +20,19 @@ class Agent(DBBaseModel):
     agent_template_id = Column(Integer)
 
     def __repr__(self):
-        return f"Agent(id={self.id}, name='{self.name}', project_id={self.project_id}, " \
-               f"description='{self.description}', agent_template_id={self.agent_template_id})"
+        return (
+            f"Agent(id={self.id}, name='{self.name}', project_id={self.project_id}, "
+            f"description='{self.description}', agent_template_id={self.agent_template_id})"
+        )
 
     @classmethod
     def fetch_configuration(cls, session, agent_id: int):
         agent = session.query(Agent).filter_by(id=agent_id).first()
-        agent_configurations = session.query(superagi.models.agent_config.AgentConfiguration).filter_by(agent_id=agent_id).all()
+        agent_configurations = (
+            session.query(superagi.models.agent_config.AgentConfiguration)
+            .filter_by(agent_id=agent_id)
+            .all()
+        )
         # print("Configuration ", agent_configurations)
         parsed_config = {
             "agent_id": agent.id,
@@ -43,7 +49,7 @@ class Agent(DBBaseModel):
             "permission_type": None,
             "LTM_DB": None,
             "memory_window": None,
-            "max_iterations" : None
+            "max_iterations": None,
         }
         if not agent_configurations:
             return parsed_config

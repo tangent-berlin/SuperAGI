@@ -10,14 +10,12 @@ FINISH_NAME = "finish"
 
 
 class AgentPromptBuilder:
-
     @staticmethod
     def add_list_items_to_string(items: List[str]) -> str:
         list_string = ""
         for i, item in enumerate(items):
             list_string += f"{i + 1}. {item}\n"
         return list_string
-
 
     @classmethod
     def add_tools_to_prompt(cls, tools: List[BaseTool], add_finish: bool = True) -> str:
@@ -48,9 +46,10 @@ class AgentPromptBuilder:
         # print(tool.args)
         output += f", args json schema: {json.dumps(tool.args)}"
         return output
+
     @classmethod
     def clean_prompt(cls, prompt):
-        prompt = re.sub(' +', ' ', prompt)
+        prompt = re.sub(" +", " ", prompt)
         return prompt
 
     @classmethod
@@ -63,8 +62,11 @@ class AgentPromptBuilder:
                 "criticism": "constructive self-criticism",
                 "speak": "thoughts summary to say to user",
             },
-            "tool": {"name": "tool name/task name", "description": "tool or task description",
-                     "args": {"arg name": "value"}}
+            "tool": {
+                "name": "tool name/task name",
+                "description": "tool or task description",
+                "args": {"arg name": "value"},
+            },
         }
         formatted_response_format = json.dumps(response_format, indent=4)
 
@@ -95,9 +97,13 @@ class AgentPromptBuilder:
           Ensure the response can be parsed by Python json.loads.
         """
 
-        super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt).replace("{response_format}",
-                                                                                     formatted_response_format)
-        return {"prompt": super_agi_prompt, "variables": ["goals", "constraints", "tools"]}
+        super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt).replace(
+            "{response_format}", formatted_response_format
+        )
+        return {
+            "prompt": super_agi_prompt,
+            "variables": ["goals", "constraints", "tools"],
+        }
 
     @classmethod
     def start_task_based(cls):
@@ -113,7 +119,10 @@ class AgentPromptBuilder:
         Example: ["{{TASK-1}}", "{{TASK-2}}"].
         """
 
-        return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt), "variables": ["goals"]}
+        return {
+            "prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
+            "variables": ["goals"],
+        }
         # super_agi_prompt = super_agi_prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(goals))
 
     @classmethod
@@ -148,9 +157,13 @@ class AgentPromptBuilder:
         Your answer must be something that JSON.parse() can read, and nothing else.
         """
 
-        super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt) \
-            .replace("{constraints}", AgentPromptBuilder.add_list_items_to_string(constraints))
-        return {"prompt": super_agi_prompt, "variables": ["goals", "tools", "current_task"]}
+        super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt).replace(
+            "{constraints}", AgentPromptBuilder.add_list_items_to_string(constraints)
+        )
+        return {
+            "prompt": super_agi_prompt,
+            "variables": ["goals", "tools", "current_task"],
+        }
 
     @classmethod
     def create_tasks(cls):
@@ -172,47 +185,80 @@ class AgentPromptBuilder:
          
         Your answer should be an array of strings that can be used with JSON.parse() and NOTHING ELSE. Return empty array if no new task is required.
         """
-        return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
-                "variables": ["goals", "last_task", "last_task_result", "pending_tasks"]}
+        return {
+            "prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
+            "variables": ["goals", "last_task", "last_task_result", "pending_tasks"],
+        }
 
     @classmethod
-    def replace_main_variables(cls, super_agi_prompt: str, goals: List[str], constraints: List[str],
-                               tools: List[BaseTool], add_finish_tool: bool = True):
-        super_agi_prompt = super_agi_prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(goals))
-        super_agi_prompt = super_agi_prompt.replace("{constraints}",
-                                                    AgentPromptBuilder.add_list_items_to_string(constraints))
+    def replace_main_variables(
+        cls,
+        super_agi_prompt: str,
+        goals: List[str],
+        constraints: List[str],
+        tools: List[BaseTool],
+        add_finish_tool: bool = True,
+    ):
+        super_agi_prompt = super_agi_prompt.replace(
+            "{goals}", AgentPromptBuilder.add_list_items_to_string(goals)
+        )
+        super_agi_prompt = super_agi_prompt.replace(
+            "{constraints}", AgentPromptBuilder.add_list_items_to_string(constraints)
+        )
         tools_string = AgentPromptBuilder.add_tools_to_prompt(tools, add_finish_tool)
         super_agi_prompt = super_agi_prompt.replace("{tools}", tools_string)
         return super_agi_prompt
 
     @classmethod
-    def replace_task_based_variables(cls, super_agi_prompt: str, current_task: str, last_task: str,
-                                     last_task_result: str, pending_tasks: List[str], completed_tasks: list, token_limit: int):
+    def replace_task_based_variables(
+        cls,
+        super_agi_prompt: str,
+        current_task: str,
+        last_task: str,
+        last_task_result: str,
+        pending_tasks: List[str],
+        completed_tasks: list,
+        token_limit: int,
+    ):
         if "{current_task}" in super_agi_prompt:
             super_agi_prompt = super_agi_prompt.replace("{current_task}", current_task)
         if "{last_task}" in super_agi_prompt:
             super_agi_prompt = super_agi_prompt.replace("{last_task}", last_task)
         if "{last_task_result}" in super_agi_prompt:
-            super_agi_prompt = super_agi_prompt.replace("{last_task_result}", last_task_result)
+            super_agi_prompt = super_agi_prompt.replace(
+                "{last_task_result}", last_task_result
+            )
         if "{pending_tasks}" in super_agi_prompt:
-            super_agi_prompt = super_agi_prompt.replace("{pending_tasks}", str(pending_tasks))
+            super_agi_prompt = super_agi_prompt.replace(
+                "{pending_tasks}", str(pending_tasks)
+            )
 
         completed_tasks.reverse()
         if "{completed_tasks}" in super_agi_prompt:
             completed_tasks_arr = []
             for task in completed_tasks:
-                completed_tasks_arr.append(task['task'])
-            super_agi_prompt = super_agi_prompt.replace("{completed_tasks}", str(completed_tasks_arr))
+                completed_tasks_arr.append(task["task"])
+            super_agi_prompt = super_agi_prompt.replace(
+                "{completed_tasks}", str(completed_tasks_arr)
+            )
 
-        base_token_limit = TokenCounter.count_message_tokens([{"role": "user", "content": super_agi_prompt}])
+        base_token_limit = TokenCounter.count_message_tokens(
+            [{"role": "user", "content": super_agi_prompt}]
+        )
         pending_tokens = token_limit - base_token_limit
         final_output = ""
         if "{task_history}" in super_agi_prompt:
             for task in reversed(completed_tasks[-10:]):
-                final_output = f"Task: {task['task']}\nResult: {task['response']}\n" + final_output
-                token_count = TokenCounter.count_message_tokens([{"role": "user", "content": final_output}])
+                final_output = (
+                    f"Task: {task['task']}\nResult: {task['response']}\n" + final_output
+                )
+                token_count = TokenCounter.count_message_tokens(
+                    [{"role": "user", "content": final_output}]
+                )
                 # giving buffer of 100 tokens
                 if token_count > min(600, pending_tokens):
                     break
-            super_agi_prompt = super_agi_prompt.replace("{task_history}", "\n" + final_output + "\n")
+            super_agi_prompt = super_agi_prompt.replace(
+                "{task_history}", "\n" + final_output + "\n"
+            )
         return super_agi_prompt

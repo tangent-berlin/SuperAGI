@@ -9,11 +9,13 @@ def print_func(text: str) -> None:
     print("\n")
     print(text)
 
+
 class HumanInputSchema(BaseModel):
     query: str = Field(
         ...,
         description="Question for the human",
     )
+
 
 class HumanInput(BaseTool):
     name = "Human"
@@ -26,9 +28,6 @@ class HumanInput(BaseTool):
     prompt_func: Callable[[str], None] = Field(default_factory=lambda: print_func)
     input_func: Callable = Field(default_factory=lambda: input)
 
-    def _execute(
-        self,
-        query: str
-    ) -> str:
+    def _execute(self, query: str) -> str:
         self.prompt_func(query)
         return self.input_func()
